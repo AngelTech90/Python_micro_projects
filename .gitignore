@@ -1,0 +1,8 @@
+#*Here we are ignoring all our files with "txt" extension:
+*.txt
+
+#*Here we aren't ignoring our file a 
+!a.txt
+
+#*Here we are ignoring our entire directory
+pene/
