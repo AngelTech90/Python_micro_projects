@@ -1,126 +1,166 @@
-# print("PDF generado con éxito: estructura_calendario.pdf")
+
 from fpdf import FPDF
 import textwrap
 from datetime import datetime
 
+
 class CustomPDF(FPDF):
     def header(self):
-        self.set_font('Arial', 'B', 12)  # Set header font to Arial Bold
-        self.cell(0, 10, 'Technical Experience & Project Analysis', 0, 1, 'C')
+        self.set_font('Arial', 'B', 12)
+        self.cell(0, 10, 'Informe Detallado: Desarrollo de Mokepon World', 0, 1, 'C')
         self.ln(10)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('Arial', 'I', 8)  # Set footer font to Arial Italic
-        self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
+        self.set_font('Arial', 'I', 8)
+        self.cell(0, 10, f'Página {self.page_no()}', 0, 0, 'C')
 
     def chapter_title(self, title):
-        self.set_font('Arial', 'B', 14)  # Set chapter title font to Arial Bold
+        self.set_font('Arial', 'B', 14)
         self.set_fill_color(200, 220, 255)
         self.cell(0, 10, title, 0, 1, 'L', True)
         self.ln(5)
 
     def chapter_body(self, text):
-        self.set_font('Arial', '', 11)  # Set body font to Arial Regular
-        # Replace bullet points with asterisks or remove them
-        text = text.replace('•', '*')  # Replace bullet with asterisk
+        self.set_font('Arial', '', 11)
         lines = textwrap.wrap(text, width=85)
         for line in lines:
             self.multi_cell(0, 6, line)
         self.ln(5)
 
-def create_technical_report():
+
+def create_detailed_report():
     pdf = CustomPDF()
     pdf.add_page()
 
-    # Open Source & Integrations Section
-    pdf.chapter_title("1. Open-Source & Integrations Experience")
-    open_source_text = """In my Dashboard_project (https://github.com/AngelTech90/Dashboard_project), I demonstrated extensive 
-    experience with open-source tools and integrations. I handled versioning challenges by implementing semantic versioning 
-    and maintaining detailed dependency documentation. The project showcases integration with various open-source libraries 
-    and frameworks, particularly in React and Node.js environments."""
-    pdf.chapter_body(open_source_text)
+    # Section 1: Introducción
+    pdf.chapter_title("1. Introducción")
+    intro_text = """Este informe detalla el análisis del proyecto Mokepon World, un juego inspirado en Pokémon, 
+    junto con una explicación de la metodología en cascada (Waterfall) y cómo se aplica al desarrollo de software. 
+    También se incluyen detalles técnicos sobre el código, la estructura del proyecto y las recomendaciones para 
+    mejorar el desarrollo del juego."""
+    pdf.chapter_body(intro_text)
 
-    # Chrome Extensions Section
-    pdf.chapter_title("2. Chrome Extensions Development")
-    chrome_ext_text = """While my GitHub portfolio doesn't specifically showcase Chrome extensions, my experience with 
-    JavaScript and React in projects like Buscadis-new (https://github.com/AngelTech90/Buscadis-new) provides a strong 
-    foundation for browser extension development. I understand the Chrome Extension API and have worked with similar 
-    client-side technologies."""
-    pdf.chapter_body(chrome_ext_text)
+    # Section 2: Metodología en Cascada
+    pdf.chapter_title("2. Metodología en Cascada")
+    waterfall_text = """La metodología en cascada, también conocida como modelo Waterfall, es un proceso de desarrollo 
+    secuencial que sigue las siguientes etapas:
+    
+    1. **Recopilación y análisis de requisitos**: Se identifican y documentan todas las necesidades del cliente.
+    2. **Diseño del sistema**: Se crea un diseño detallado del sistema, incluyendo arquitectura y componentes.
+    3. **Implantación**: Se desarrolla el sistema basado en el diseño.
+    4. **Pruebas**: Se realizan pruebas exhaustivas para garantizar la calidad.
+    5. **Despliegue**: El sistema se entrega al cliente y se implementa en producción.
+    6. **Mantenimiento**: Se realizan ajustes y actualizaciones según sea necesario.
 
-    # AI & Automations Section
-    pdf.chapter_title("3. AI & Automations Implementation")
-    ai_text = """I have extensively worked with AI tools in my Mokepon_AI-2 project (https://github.com/AngelTech90/Mokepon_AI-2), 
-    implementing Vercel SDK for AI features. I regularly use GitHub Copilot and ChatGPT to enhance development efficiency. 
-    My Notion documentation demonstrates how I leverage AI for improving documentation quality and maintaining best practices."""
-    pdf.chapter_body(ai_text)
+    **Características**:
+    * Es una secuencia rígida de pasos.
+    * Se ha aplicado con éxito en la industria de la construcción.
+    * Es conocida por su uso en el desarrollo de software.
 
-    # Server Setup & DevOps Section
-    pdf.chapter_title("4. Server Setup & DevOps Experience")
-    devops_text = """My experience with Docker and container-based deployments is evident in my Dashboard_project, where 
-    I implemented containerized environments for consistent development and deployment. I utilize Docker Compose for 
-    managing multi-container applications and implement CI/CD pipelines for automated testing and deployment."""
-    pdf.chapter_body(devops_text)
+    **Cuándo se aplica**:
+    * Cuando el objetivo final del proyecto está bien definido.
+    * Cuando no hay restricciones de presupuesto ni de tiempo.
+    * Cuando los clientes no pueden cambiar el alcance del proyecto al comenzar.
+    * Cuando no existen requisitos ambiguos.
 
-    # Unique Project Example
-    pdf.chapter_title("5. Unique Project Highlight")
-    project_text = """The Mokepon_AI-2 project stands out as a particularly challenging implementation. It combines game 
-    development with AI integration using Vercel SDK. The project required solving complex problems in real-time game 
-    mechanics while maintaining optimal performance and user experience."""
+    **Ventajas**:
+    * Produce resultados coherentes, fiables y controlados.
+    * Ideal para proyectos con objetivos claros y requisitos bien definidos.
+
+    **Inconvenientes**:
+    * Falta de flexibilidad para cambios durante el desarrollo.
+    * Los errores detectados en etapas avanzadas pueden ser costosos de corregir."""
+    pdf.chapter_body(waterfall_text)
+
+    # Section 3: Análisis del Proyecto Mokepon World
+    pdf.chapter_title("3. Análisis del Proyecto Mokepon World")
+    project_text = """El proyecto Mokepon World es un juego que combina desarrollo de software, lógica de juego y animaciones. 
+    A continuación, se describen los aspectos clave del proyecto:
+
+    * **Estructura del proyecto**:
+      - El proyecto está organizado en carpetas para activos, código fuente y pruebas.
+      - Incluye archivos para HTML, CSS y JavaScript, con subcarpetas para animaciones, lógica y controladores.
+
+    * **Lógica del juego**:
+      - Los enemigos tienen animaciones controladas dinámicamente mediante intervalos.
+      - El sistema de combate incluye ventajas de tipo, lógica de ataques y mecanismos de reinicio.
+
+    * **Clases y objetos**:
+      - Los Mokepons son objetos que encapsulan propiedades como tipos, ataques y posiciones.
+      - Se utilizan clases para definir la estructura y comportamiento de los Mokepons.
+
+    * **Recomendaciones**:
+      - Refactorizar la inicialización de Mokepons utilizando funciones de fábrica.
+      - Optimizar la lógica de combate reemplazando condiciones rígidas con tablas de búsqueda.
+      - Agrupar variables relacionadas con el combate en objetos para mejorar la legibilidad."""
     pdf.chapter_body(project_text)
 
-    # HubSpot Experience
-    pdf.chapter_title("6. HubSpot Experience")
-    hubspot_text = """My experience with HubSpot includes working with its automation tools and CRM integration. In the 
-    Dashboard_project, I implemented CRM functionalities similar to HubSpot's approach, focusing on workflow automation 
-    and customer data management. I understand HubSpot's automation capabilities and how to leverage them for business 
-    process optimization."""
-    pdf.chapter_body(hubspot_text)
+    # Section 4: Detalles del Código
+    pdf.chapter_title("4. Detalles del Código")
+    code_text = """El código del proyecto Mokepon World incluye las siguientes características técnicas:
 
-    # Bash Automation Skills Section
-    pdf.chapter_title("7. Bash Automation Skills")
-    bash_text = """I have developed various Bash scripts to automate repetitive tasks, enhancing efficiency and productivity. 
-    My repository, Practice_Bash_Script (https://github.com/AngelTech90/Practice_Bash_Script), showcases my ability to create 
-    scripts that streamline processes, manage system resources, and automate backups. These scripts demonstrate my proficiency 
-    in using Bash for task automation and system management."""
-    pdf.chapter_body(bash_text)
+    * **Inicialización de Mokepons**:
+      Los Mokepons se crean utilizando una clase que define sus propiedades y métodos. Ejemplo:
+      ```
+      class Mokepon:
+          def __init__(self, image, input_id, label_id, name, x=0, y=0):
+              self.image = image
+              self.input_id = input_id
+              self.label_id = label_id
+              self.name = name
+              self.x = x
+              self.y = y
+      ```
 
-    # PowerShell Automation Skills Section
-    pdf.chapter_title("8. PowerShell Automation Skills")
-    powershell_text = """In addition to Bash, I have experience with PowerShell scripting for automation on Windows systems. 
-    My repository, Practice_PowerShell (https://github.com/AngelTech90/Practice_PowerShell), highlights my skills in creating 
-    scripts that automate administrative tasks, manage system configurations, and enhance workflow efficiency. I leverage 
-    PowerShell's capabilities to improve productivity and streamline operations."""
-    pdf.chapter_body(powershell_text)
+    * **Animaciones de enemigos**:
+      Las animaciones se controlan mediante intervalos dinámicos. Ejemplo:
+      ```
+      function animateEnemy(enemyId, direction, duration) {
+          const intervalKey = `enemy${enemyId}_${direction}`;
+          intervalsIdList[intervalKey] = setInterval(() => {
+              updateEnemyPosition(enemyId, direction);
+          }, 50);
 
-    # Portfolio Section
-    pdf.chapter_title("9. Portfolio")
-    portfolio_text = """You can view my portfolio at the following link: https://angeltech90.github.io/Prove_Gmail_templates/first_template.html. 
-    It showcases my work, including various projects and templates that demonstrate my skills in web development and automation. 
-    This portfolio reflects my commitment to quality and my ability to deliver effective solutions."""
-    pdf.chapter_body(portfolio_text)
+          setTimeout(() => {
+              clearInterval(intervalsIdList[intervalKey]);
+              animateEnemy(enemyId, -direction, duration);
+          }, duration);
+      }
+      ```
 
-    # Additional Skills & Technologies
-    pdf.add_page()
-    pdf.chapter_title("Technical Skills Overview")
-    skills_text = """
-    * Frontend: React.js, JavaScript, HTML5, CSS3
-    * Backend: Node.js, Express.js, Python
-    * DevOps: Docker, CI/CD, Git
-    * AI Integration: Vercel SDK, OpenAI API
-    * Documentation: Notion, Technical Writing
-    * Testing: Postman, API Testing"""
-    pdf.chapter_body(skills_text)
+    * **Sistema de combate**:
+      El sistema de combate utiliza ventajas de tipo para determinar el ganador. Ejemplo:
+      ```
+      const typeAdvantages = {
+          fire: ['ice', 'steel'],
+          water: ['fire', 'earth'],
+          earth: ['thunder', 'steel'],
+      };
+
+      function checkTypeAdvantage(type1, type2) {
+          return typeAdvantages[type1]?.includes(type2);
+      }
+      ```"""
+    pdf.chapter_body(code_text)
+
+    # Section 5: Conclusión
+    pdf.chapter_title("5. Conclusión")
+    conclusion_text = """El proyecto Mokepon World es un excelente ejemplo de cómo combinar desarrollo de software, 
+    lógica de juego y metodologías estructuradas como Waterfall. Las recomendaciones proporcionadas pueden ayudar a 
+    optimizar el código y mejorar la experiencia del usuario. La metodología en cascada es ideal para este tipo de 
+    proyectos debido a su enfoque estructurado y predecible."""
+    pdf.chapter_body(conclusion_text)
 
     # Save the PDF
-    filename = f"technical_profile_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    filename = f"reporte_detallado_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
     pdf.output(filename)
     return filename
 
+
 if __name__ == "__main__":
     try:
-        output_file = create_technical_report()
-        print(f"PDF report generated successfully: {output_file}")
+        output_file = create_detailed_report()
+        print(f"PDF generado con éxito: {output_file}")
     except Exception as e:
-        print(f"Error generating PDF: {str(e)}")
+        print(f"Error al generar el PDF: {str(e)}")
