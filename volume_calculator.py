@@ -8,7 +8,8 @@ def calculate_transaction_volume(initial_amount, growth_rate, movements):
 
     return {
         'total_movements': movements,
-        'total_volume': round(total_volume, 2)
+        'total_volume': round(total_volume, 2),
+        'incomes': round(current_amount,2)
     }
 
 # Get user input
@@ -17,5 +18,5 @@ growth_rate = float(input("Enter the growth rate (as a decimal, e.g., 0.06 for 6
 movements = int(input("Enter the number of movements: "))  # Convert to int
 
 result = calculate_transaction_volume(initial_amount, growth_rate, movements)
-print(f"Total Movements: {result['total_movements']}, Total Volume: ${result['total_volume']}")
+print(f"Total Movements: {result['total_movements']}, Total Volume: ${result['total_volume']}, Total incomes: ${result['incomes']-25}")
 
