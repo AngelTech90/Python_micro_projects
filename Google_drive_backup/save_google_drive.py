@@ -10,7 +10,7 @@ Prerequisites:
 3. Create OAuth 2.0 credentials and download credentials.json
 4. Place credentials.json in the same directory as this script
 
-Author: Your Name
+Author: Angel Molina
 License: MIT
 """
 
