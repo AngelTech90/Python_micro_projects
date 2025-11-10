@@ -32,6 +32,7 @@ ONCEPT: Ignore all directories at the top level of the repository.
 **/include/
 **/.Python
 **/pyvenv.cfg
+**/credentials.json
 
 # Ignore Python packages (these are generally fine as is, applying anywhere)
 __pycache__/
