@@ -2,6 +2,7 @@ ONCEPT: Ignore all directories at the top level of the repository.
 # You MUST explicitly unignore any directories you want Git to track.
 # -----------------------------------------------------------------------------
 */
+!Google_drive_backup
 
 # UNIGNORE: If you have specific top-level directories you want to track,
 # list them here. For example, if your actual source code is in 'my_project_code':
