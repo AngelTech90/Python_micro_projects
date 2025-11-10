@@ -161,5 +161,5 @@ for line in content:
     pdf.multi_cell(0, 10, line)
 
 # Guardar el PDF
-pdf.output('estructura_calendario.pdf')
+pdf.output('./generated_docs/estructura_calendario.pdf')
 
