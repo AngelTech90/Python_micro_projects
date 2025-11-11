@@ -1,8 +1,30 @@
-ONCEPT: Ignore all directories at the top level of the repository.
+
 # You MUST explicitly unignore any directories you want Git to track.
 # -----------------------------------------------------------------------------
 */
-!Google_drive_backup
+
+# UNIGNORE: If you have specific top-level directories you want to track,
+# list them here. For example, if your actual source code is in 'my_project_code':
+#!my_project_code/
+#!my_project_code/**/*  # Also unignore its contents
+
+# UNIGNORE: If you have a 'src' directory you *do* want to track, and
+# you want to track 'python' within it:
+#!src/
+#!src/python/
+#!src/python/**/* # And its contents
+
+
+# -----------------------------------------------------------------------------
+# ADAPTED EXISTING RULES: Now these apply to any directory, not just /src/python
+# If a directory (e.g., 'my_project_code/') is unignored above, these rules
+# will then apply to paths within 'my_project_code'.
+# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# NEW CONCEPT: Ignore all directories at the top level of the repository.
+# You MUST explicitly unignore any directories you want Git to track.
+# -----------------------------------------------------------------------------
+*/
 
 # UNIGNORE: If you have specific top-level directories you want to track,
 # list them here. For example, if your actual source code is in 'my_project_code':
@@ -22,6 +44,10 @@ ONCEPT: Ignore all directories at the top level of the repository.
 # will then apply to paths within 'my_project_code'.
 # -----------------------------------------------------------------------------
 
+# Ignore sensitive credential files anywhere in the repository
+**/token.json
+**/credentials.json
+
 # Ignore Python virtual environments relative to any unignored directory
 # The `**/` matches zero or more directories, so it works anywhere.
 **/venv/
@@ -32,7 +58,6 @@ ONCEPT: Ignore all directories at the top level of the repository.
 **/include/
 **/.Python
 **/pyvenv.cfg
-**/credentials.json
 
 # Ignore Python packages (these are generally fine as is, applying anywhere)
 __pycache__/
