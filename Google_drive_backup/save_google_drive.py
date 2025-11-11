@@ -191,7 +191,7 @@ def backup_directory(service, local_dir, drive_folder_name="Backup"):
     
     # Upload each file
     uploaded_count = 0
-    for file_path in local_path.rglob('*'):
+    for file_path in local_path.rglob('*.zip'):
         if file_path.is_file():
             result = upload_file(service, str(file_path), folder_id)
             if result:
@@ -214,8 +214,8 @@ def main():
     
     # Example usage: Backup a specific directory
     # Modify these variables according to your needs
-    LOCAL_DIRECTORY = "./files_to_backup"  # Change this to your directory
-    DRIVE_FOLDER_NAME = "MyBackup"  # Change this to your preferred folder name
+    LOCAL_DIRECTORY = "../../../Personal_Brand/backup"  # Change this to your directory
+    DRIVE_FOLDER_NAME = "Projects_backups"  # Change this to your preferred folder name
     
     print(f"\nStarting backup of: {LOCAL_DIRECTORY}")
     print(f"Destination folder: {DRIVE_FOLDER_NAME}")
