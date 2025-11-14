@@ -25,7 +25,6 @@
 # You MUST explicitly unignore any directories you want Git to track.
 # -----------------------------------------------------------------------------
 */
-!Youtube_videos_uploader
 # UNIGNORE: If you have specific top-level directories you want to track,
 # list them here. For example, if your actual source code is in 'my_project_code':
 #!my_project_code/
