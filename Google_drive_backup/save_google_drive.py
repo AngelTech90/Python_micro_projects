@@ -11,7 +11,6 @@ Prerequisites:
 4. Place credentials.json in the same directory as this script
 
 Author: Angel Molina
-License: MIT
 """
 
 import os
