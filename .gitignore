@@ -1,4 +1,5 @@
-# You MUST explicitly unignore any directories you want Git to track.
+
+#You MUST explicitly unignore any directories you want Git to track.
 # -----------------------------------------------------------------------------
 */
 
@@ -12,7 +13,7 @@
 #!src/
 #!src/python/
 #!src/python/**/* # And its contents
-
+!Repositories_data_scrapper
 
 # -----------------------------------------------------------------------------
 # ADAPTED EXISTING RULES: Now these apply to any directory, not just /src/python
