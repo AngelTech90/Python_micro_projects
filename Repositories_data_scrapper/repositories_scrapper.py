@@ -32,7 +32,7 @@ def get_repository_links(username):
         username: GitHub username
         
     Returns:
-        List of repository clone URLs (SSH format)
+        List of repository clone URLs
     """
     print_colored(f"\n🔍 Fetching repositories for user: {username}", BLUE)
     
@@ -60,49 +60,45 @@ def get_repository_links(username):
         
         for link in repo_links:
             repo_name = link.text.strip()
-            # Convert to SSH clone URL
-            ssh_url = f"git@github.com:{username}/{repo_name}.git"
-            repos.append({'name': repo_name, 'url': ssh_url})
-            print_colored(f"  ✓ Found: {repo_name}", GREEN)
+            # Use HTTPS clone URL
+            https_url = f"https://github.com/{username}/{repo_name}.git"
+            repos.append(https_url)
+            print_colored(f"  ✓ Found: {https_url}", GREEN)
         
         page += 1
     
     return repos
 
 
-def clone_repository(repo_info, base_dir):
+def clone_repository(repo_url):
     """
     Clone a single repository.
     
     Args:
-        repo_info: Dictionary with 'name' and 'url' keys
-        base_dir: Directory where to clone the repository
+        repo_url: Git clone URL
         
     Returns:
         True if successful, False otherwise
     """
-    repo_name = repo_info['name']
-    repo_url = repo_info['url']
-    repo_path = os.path.join(base_dir, repo_name)
+    # Extract repo name from URL
+    repo_name = repo_url.rstrip('.git').split('/')[-1]
     
     # Check if directory already exists
-    if os.path.exists(repo_path):
+    if os.path.exists(repo_name):
         print_colored(f"  ⚠ {repo_name} already exists, skipping...", YELLOW)
         return False
     
-    print_colored(f"  → Cloning {repo_name}...", BLUE)
+    print_colored(f"  → Cloning {repo_url}...", BLUE)
     
     try:
-        result = subprocess.run(
-            ['git', 'clone', repo_url, repo_path],
-            capture_output=True,
-            text=True,
+        subprocess.run(
+            ['git', 'clone', repo_url],
             check=True
         )
         print_colored(f"  ✓ Successfully cloned {repo_name}", GREEN)
         return True
     except subprocess.CalledProcessError as e:
-        print_colored(f"  ✗ Failed to clone {repo_name}: {e.stderr}", RED)
+        print_colored(f"  ✗ Failed to clone {repo_name}", RED)
         return False
     except FileNotFoundError:
         print_colored("  ✗ Git is not installed or not in PATH", RED)
@@ -143,11 +139,14 @@ def main():
     failed = 0
     skipped = 0
     
-    for repo in repos:
-        result = clone_repository(repo, base_dir)
+    for repo_url in repos:
+        result = clone_repository(repo_url)
+        # Extract repo name for checking
+        repo_name = repo_url.rstrip('.git').split('/')[-1]
+        
         if result is True:
             successful += 1
-        elif result is False and os.path.exists(os.path.join(base_dir, repo['name'])):
+        elif result is False and os.path.exists(repo_name):
             skipped += 1
         else:
             failed += 1
