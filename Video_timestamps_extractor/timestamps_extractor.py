@@ -1,32 +1,36 @@
 #!/usr/bin/env python3
 """
 Video Transcription and Timestamp Analysis Script
-Extracts transcription from video using FFmpeg and analyzes it with Gemini AI
+Extracts transcription from audio using AssemblyAI API and analyzes it with Gemini AI
 to identify optimal timestamps for complementary video clips.
 """
 
 import os
 import sys
-import subprocess
 import pickle
 import json
 import re
+import time
+import requests
 from pathlib import Path
-import google.generativeai as genai
 from datetime import datetime
+import google.generativeai as genai
+from dotenv import load_dotenv
 
 
 class VideoTimestampAnalyzer:
-    def __init__(self, api_key, video_path):
+    def __init__(self, gemini_api_key, assemblyai_api_key, audio_url):
         """
-        Initialize the analyzer with Gemini API key and video path.
+        Initialize the analyzer with Gemini and AssemblyAI API keys.
         
         Args:
-            api_key (str): Google Gemini API key
-            video_path (str): Path to the video file
+            gemini_api_key (str): Google Gemini API key
+            assemblyai_api_key (str): AssemblyAI API key
+            audio_url (str): URL to the audio file (.mp3)
         """
-        self.api_key = api_key
-        self.video_path = Path(video_path)
+        self.gemini_api_key = gemini_api_key
+        self.assemblyai_api_key = assemblyai_api_key
+        self.audio_url = audio_url
         self.transcription_dir = Path("transcriptions")
         self.dataset_dir = Path("data_sets")
         
@@ -35,170 +39,121 @@ class VideoTimestampAnalyzer:
         self.dataset_dir.mkdir(exist_ok=True)
         
         # Configure Gemini API
-        genai.configure(api_key=self.api_key)
+        genai.configure(api_key=self.gemini_api_key)
         self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
         
-        # Generate output filenames based on video name
-        video_name = self.video_path.stem
+        # AssemblyAI endpoints
+        self.assemblyai_base_url = "https://api.assemblyai.com/v2"
+        
+        # Generate output filenames based on timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.transcription_file = self.transcription_dir / f"{video_name}_{timestamp}.txt"
-        self.pkl_file = self.dataset_dir / f"{video_name}_{timestamp}_timestamps.pkl"
-    
-    def check_ffmpeg(self):
-        """Check if FFmpeg is installed and accessible."""
-        try:
-            subprocess.run(
-                ["ffmpeg", "-version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True
-            )
-            print("✓ FFmpeg is installed and accessible")
-            return True
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            print("✗ FFmpeg is not installed or not in PATH")
-            print("Please install FFmpeg: sudo apt-get install ffmpeg")
-            return False
+        self.transcription_file = self.transcription_dir / f"transcription_{timestamp}.txt"
+        self.pkl_file = self.dataset_dir / f"transcription_{timestamp}_timestamps.pkl"
     
     def extract_transcription(self):
         """
-        Extract transcription with timestamps from video using FFmpeg.
-        This extracts subtitles if available in the video file.
+        Extract transcription from audio using AssemblyAI API.
         """
-        print(f"\n[1/3] Extracting transcription from: {self.video_path}")
+        print(f"\n[1/3] Extracting transcription from audio using AssemblyAI API")
         
-        if not self.video_path.exists():
-            raise FileNotFoundError(f"Video file not found: {self.video_path}")
-        
-        # Try to extract embedded subtitles first
         try:
-            # Extract subtitle track (if available)
-            subtitle_temp = self.transcription_dir / "temp_subtitle.srt"
+            # Submit audio for transcription
+            print("  Submitting audio for transcription...")
             
-            cmd = [
-                "ffmpeg",
-                "-i", str(self.video_path),
-                "-map", "0:s:0",  # Select first subtitle stream
-                "-f", "srt",
-                str(subtitle_temp),
-                "-y"
-            ]
+            headers = {
+                "Authorization": self.assemblyai_api_key
+            }
             
-            result = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
+            data = {
+                "audio_url": self.audio_url
+            }
+            
+            # Submit transcription request
+            response = requests.post(
+                f"{self.assemblyai_base_url}/transcript",
+                json=data,
+                headers=headers
             )
             
-            if subtitle_temp.exists() and subtitle_temp.stat().st_size > 0:
-                # Read and format subtitles
-                with open(subtitle_temp, 'r', encoding='utf-8') as f:
-                    subtitle_content = f.read()
+            if response.status_code != 200:
+                print(f"✗ Error submitting transcription: {response.status_code}")
+                print(f"  Response: {response.text}")
+                return False
+            
+            transcript_data = response.json()
+            transcript_id = transcript_data.get('id')
+            
+            print(f"  ✓ Transcription submitted (ID: {transcript_id})")
+            print("  Waiting for transcription to complete...")
+            
+            # Poll for transcription completion
+            max_retries = 120  # 10 minutes with 5 second intervals
+            retry_count = 0
+            
+            while retry_count < max_retries:
+                response = requests.get(
+                    f"{self.assemblyai_base_url}/transcript/{transcript_id}",
+                    headers=headers
+                )
                 
-                # Convert SRT to readable format with timestamps
-                transcription = self._format_srt_to_text(subtitle_content)
+                if response.status_code != 200:
+                    print(f"✗ Error retrieving transcription: {response.status_code}")
+                    return False
                 
-                # Save transcription
-                with open(self.transcription_file, 'w', encoding='utf-8') as f:
-                    f.write(transcription)
+                transcript_data = response.json()
+                status = transcript_data.get('status')
                 
-                # Clean up temp file
-                subtitle_temp.unlink()
+                if status == 'completed':
+                    print("  ✓ Transcription completed")
+                    break
+                elif status == 'error':
+                    error = transcript_data.get('error')
+                    print(f"✗ Transcription failed: {error}")
+                    return False
+                else:
+                    print(f"  Status: {status}... (waiting {retry_count + 1}/{max_retries})")
+                    time.sleep(5)
+                    retry_count += 1
+            
+            if retry_count >= max_retries:
+                print("✗ Transcription timeout")
+                return False
+            
+            # Get utterances for timestamps
+            utterances = transcript_data.get('utterances', [])
+            
+            # Format transcription with timestamps
+            formatted_lines = []
+            for utterance in utterances:
+                start = utterance.get('start', 0)
+                text_content = utterance.get('text', '')
                 
-                print(f"✓ Transcription extracted successfully")
-                print(f"  Saved to: {self.transcription_file}")
-                return True
+                # Convert milliseconds to HH:MM:SS format
+                start_time = self._milliseconds_to_timestamp(start)
+                
+                formatted_lines.append(f"[{start_time}] {text_content}")
+            
+            transcription_text = '\n'.join(formatted_lines)
+            
+            # Save transcription
+            with open(self.transcription_file, 'w', encoding='utf-8') as f:
+                f.write(transcription_text)
+            
+            print(f"✓ Transcription extracted successfully")
+            print(f"  Saved to: {self.transcription_file}")
+            return True
             
         except Exception as e:
-            print(f"Note: No embedded subtitles found or extraction failed")
-        
-        # If subtitle extraction failed, create a basic audio transcription placeholder
-        print("Creating audio-based transcription placeholder...")
-        print("Note: For actual speech-to-text, consider using Whisper or similar STT services")
-        
-        # Extract audio duration and create a basic transcription template
-        duration = self._get_video_duration()
-        
-        placeholder_text = f"""[Transcription Template]
-Video: {self.video_path.name}
-Duration: {duration}
-
-[00:00:00] Video starts
-[Note: This is a placeholder. For actual transcription, please use:
- - Manual transcription
- - YouTube auto-generated captions (if applicable)
- - Whisper AI: https://github.com/openai/whisper
- - Other speech-to-text services]
-
-Please replace this content with actual transcription including timestamps in format [HH:MM:SS] text
-"""
-        
-        with open(self.transcription_file, 'w', encoding='utf-8') as f:
-            f.write(placeholder_text)
-        
-        print(f"✓ Transcription template created: {self.transcription_file}")
-        print("  Please add actual transcription content before running analysis")
-        return True
+            print(f"✗ Error during transcription: {e}")
+            return False
     
-    def _get_video_duration(self):
-        """Get video duration using ffprobe."""
-        try:
-            cmd = [
-                "ffprobe",
-                "-v", "error",
-                "-show_entries", "format=duration",
-                "-of", "default=noprint_wrappers=1:nokey=1",
-                str(self.video_path)
-            ]
-            
-            result = subprocess.run(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=True
-            )
-            
-            duration_seconds = float(result.stdout.strip())
-            hours = int(duration_seconds // 3600)
-            minutes = int((duration_seconds % 3600) // 60)
-            seconds = int(duration_seconds % 60)
-            
-            return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-        except Exception as e:
-            return "Unknown"
-    
-    def _format_srt_to_text(self, srt_content):
-        """Convert SRT subtitle format to readable text with timestamps."""
-        lines = srt_content.strip().split('\n')
-        formatted_lines = []
-        
-        i = 0
-        while i < len(lines):
-            # Skip subtitle index numbers
-            if lines[i].strip().isdigit():
-                i += 1
-                continue
-            
-            # Process timestamp line
-            if '-->' in lines[i]:
-                timestamp_line = lines[i].strip()
-                start_time = timestamp_line.split('-->')[0].strip().split(',')[0]
-                
-                # Get subtitle text (may span multiple lines)
-                i += 1
-                subtitle_text = []
-                while i < len(lines) and lines[i].strip() and not lines[i].strip().isdigit():
-                    subtitle_text.append(lines[i].strip())
-                    i += 1
-                
-                if subtitle_text:
-                    formatted_lines.append(f"[{start_time}] {' '.join(subtitle_text)}")
-            else:
-                i += 1
-        
-        return '\n'.join(formatted_lines)
+    def _milliseconds_to_timestamp(self, milliseconds):
+        """Convert milliseconds to HH:MM:SS format."""
+        seconds = milliseconds // 1000
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        secs = seconds % 60
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
     
     def analyze_with_gemini(self):
         """
@@ -315,12 +270,8 @@ Video Transcription:
     def run_full_pipeline(self):
         """Execute the complete pipeline."""
         print("=" * 60)
-        print("Video Timestamp Analyzer - Gemini AI Integration")
+        print("Video Timestamp Analyzer - AssemblyAI + Gemini AI")
         print("=" * 60)
-        
-        # Check FFmpeg
-        if not self.check_ffmpeg():
-            return False
         
         # Extract transcription
         if not self.extract_transcription():
@@ -354,34 +305,38 @@ def main():
     print("Video Timestamp Analyzer")
     print("=" * 60 + "\n")
     
-    # Get API key from environment variable or prompt
-    api_key = os.getenv('GEMINI_API_KEY')
+    # Load environment variables from .env file
+    load_dotenv()
     
-    if not api_key:
-        print("Error: GEMINI_API_KEY environment variable not set")
-        print("\nPlease set it using:")
-        print("  export GEMINI_API_KEY='your-api-key-here'")
-        print("\nOr pass it as first argument:")
-        print("  python extract_and_analyze_timestamps.py API_KEY VIDEO_PATH")
+    # Get API keys from .env file
+    gemini_api_key = os.getenv('GEMINI_API_KEY')
+    assemblyai_api_key = os.getenv('ASSEMBLYAI_API_KEY')
+    
+    if not gemini_api_key:
+        print("Error: GEMINI_API_KEY not found in .env file")
+        print("\nPlease create a .env file with:")
+        print("GEMINI_API_KEY=your-api-key-here")
+        print("\nGet your API key at: https://makersuite.google.com/app/apikey")
         sys.exit(1)
     
-    # Get video path
+    if not assemblyai_api_key:
+        print("Error: ASSEMBLYAI_API_KEY not found in .env file")
+        print("\nPlease create a .env file with:")
+        print("ASSEMBLYAI_API_KEY=your-api-key-here")
+        print("\nGet your API key at: https://www.assemblyai.com/app/api-keys")
+        sys.exit(1)
+    
+    # Get audio URL from command line
     if len(sys.argv) < 2:
-        print("Usage: python extract_and_analyze_timestamps.py [API_KEY] VIDEO_PATH")
+        print("Usage: python extract_and_analyze_timestamps.py AUDIO_URL")
         print("\nExample:")
-        print("  python extract_and_analyze_timestamps.py my_video.mp4")
-        print("  python extract_and_analyze_timestamps.py YOUR_API_KEY my_video.mp4")
+        print("  python extract_and_analyze_timestamps.py https://example.com/audio.mp3")
         sys.exit(1)
     
-    # Check if first arg is API key or video path
-    if len(sys.argv) == 3:
-        api_key = sys.argv[1]
-        video_path = sys.argv[2]
-    else:
-        video_path = sys.argv[1]
+    audio_url = sys.argv[1]
     
     # Run the analyzer
-    analyzer = VideoTimestampAnalyzer(api_key, video_path)
+    analyzer = VideoTimestampAnalyzer(gemini_api_key, assemblyai_api_key, audio_url)
     success = analyzer.run_full_pipeline()
     
     sys.exit(0 if success else 1)

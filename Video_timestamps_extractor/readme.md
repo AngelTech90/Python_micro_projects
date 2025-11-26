@@ -1,114 +1,140 @@
-# Video Timestamp Analyzer with Gemini AI
+# Video Timestamp Analyzer with AssemblyAI and Gemini AI
 
-Automated video transcription extraction and AI-powered timestamp analysis for identifying optimal complementary video insertion points.
+Automatically extract transcriptions from audio files and analyze them with AI to identify optimal timestamps for complementary video insertion. This is Part 1 of the video enhancement workflow.
 
 ## Overview
 
-This tool analyzes video transcriptions using Google's Gemini AI to automatically identify timestamps where complementary B-roll footage or supplementary video clips would enhance the content. Perfect for video editors looking to automate the process of finding insertion points for contextual footage.
+This tool:
 
-### What it does
-
-1. **Extracts transcription** from video files using FFmpeg (subtitle tracks or manual input)
-2. **Analyzes content** with Gemini AI to identify up to 11 key moments where complementary videos would be beneficial
-3. **Outputs structured timestamps** in both Python pickle (.pkl) and JSON formats for further processing
+1. **Extracts transcription** from audio using AssemblyAI API
+2. **Analyzes content** with Gemini AI to identify up to 11 key moments for complementary videos
+3. **Outputs structured timestamps** in Python pickle (.pkl) and JSON formats for further processing
 
 ## Requirements
 
 ### System Requirements
 
-- **Operating System**: Linux (Debian-based distributions recommended), also compatible with other Unix-like systems
+- **Operating System**: Linux (Debian-based recommended), macOS, or Windows
 - **Python**: 3.7 or higher
-- **FFmpeg**: Required for video processing
+- **Internet connection**: Required for API calls
 
 ### Python Libraries
 
-All Python dependencies are listed in `requirements.txt`:
+All dependencies are listed in `requirements.txt`:
 
 ```
 google-generativeai>=0.3.0
+requests>=2.31.0
+python-dotenv>=1.0.0
 pathlib>=1.0.1
 ```
 
+### API Keys Required
+
+1. **Google Gemini API Key** - For content analysis
+2. **AssemblyAI API Key** - For speech-to-text transcription
+
 ## Installation
 
-### 1. Install System Dependencies
-
-#### On Debian/Ubuntu:
-```bash
-sudo apt-get update
-sudo apt-get install python3 python3-pip python3-venv ffmpeg
-```
-
-#### On other systems:
-- **macOS**: `brew install ffmpeg`
-- **Arch Linux**: `sudo pacman -S ffmpeg`
-
-### 2. Clone the Repository
+### 1. Install Python Dependencies
 
 ```bash
-git clone https://github.com/yourusername/video-timestamp-analyzer.git
-cd video-timestamp-analyzer
-```
-
-### 3. Set Up Python Virtual Environment (Recommended)
-
-```bash
-# Create virtual environment
+# Create virtual environment (recommended)
 python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
+# venv\Scripts\activate   # Windows
 
-# Activate virtual environment
-source venv/bin/activate  # On Linux/macOS
-# venv\Scripts\activate   # On Windows
-```
-
-### 4. Install Python Dependencies
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 5. Configure Gemini API Key
+### 2. Get API Keys
 
-You need a Google Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+#### Gemini API Key:
+1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy your API key
 
-#### Option A: Set as Environment Variable (Recommended)
+#### AssemblyAI API Key:
+1. Visit [AssemblyAI Dashboard](https://www.assemblyai.com/app/api-keys)
+2. Sign up or log in to your account
+3. Copy your API key from the dashboard
+
+### 3. Configure API Keys with .env File
+
+#### Create .env file:
 ```bash
-export GEMINI_API_KEY='your-api-key-here'
+touch .env
 ```
 
-To make it permanent, add to your `~/.bashrc` or `~/.zshrc`:
+#### Add your API keys:
 ```bash
-echo "export GEMINI_API_KEY='your-api-key-here'" >> ~/.bashrc
-source ~/.bashrc
+# .env file
+GEMINI_API_KEY=your_gemini_api_key_here
+ASSEMBLYAI_API_KEY=your_assemblyai_api_key_here
 ```
 
-#### Option B: Pass as Command Line Argument
+Get your keys from:
+- **Gemini**: https://makersuite.google.com/app/apikey
+- **AssemblyAI**: https://www.assemblyai.com/app/api-keys
+
+#### Add .env to .gitignore:
 ```bash
-python extract_and_analyze_timestamps.py YOUR_API_KEY video.mp4
+echo ".env" >> .gitignore
 ```
+
+**IMPORTANT**: Never commit your `.env` file to Git!
 
 ## Usage
 
-### Basic Usage
+### Basic Command
 
 ```bash
-python extract_and_analyze_timestamps.py path/to/your/video.mp4
-```
-
-### With API Key as Argument
-
-```bash
-python extract_and_analyze_timestamps.py YOUR_API_KEY path/to/your/video.mp4
+python extract_and_analyze_timestamps.py AUDIO_URL
 ```
 
 ### Example
 
 ```bash
-# Using environment variable
-python extract_and_analyze_timestamps.py my_tutorial_video.mp4
+# Analyze audio file from URL
+python extract_and_analyze_timestamps.py https://example.com/audio.mp3
+```
 
-# Using command line argument
-python extract_and_analyze_timestamps.py AIzaSyD... my_tutorial_video.mp4
+### Expected Output
+
+```
+============================================================
+Video Timestamp Analyzer
+============================================================
+
+[1/3] Extracting transcription from audio using AssemblyAI API
+  Submitting audio for transcription...
+  ✓ Transcription submitted (ID: abc-123-def)
+  Waiting for transcription to complete...
+  Status: processing... (waiting 1/120)
+  Status: processing... (waiting 2/120)
+  ✓ Transcription completed
+✓ Transcription extracted successfully
+  Saved to: transcriptions/transcription_20241115_143022.txt
+
+[2/3] Analyzing transcription with Gemini AI...
+✓ Received response from Gemini AI
+✓ Successfully parsed 9 timestamp entries
+
+[3/3] Saving results to pickle file...
+✓ Data saved successfully
+  Saved to: data_sets/transcription_20241115_143022_timestamps.pkl
+  JSON copy: data_sets/transcription_20241115_143022_timestamps.json
+
+============================================================
+✓ Pipeline completed successfully!
+============================================================
+
+Output files:
+  - Transcription: transcriptions/transcription_20241115_143022.txt
+  - Timestamps:    data_sets/transcription_20241115_143022_timestamps.pkl
+  - JSON:          data_sets/transcription_20241115_143022_timestamps.json
 ```
 
 ## Output
@@ -116,8 +142,8 @@ python extract_and_analyze_timestamps.py AIzaSyD... my_tutorial_video.mp4
 The script creates two directories:
 
 ### `transcriptions/`
-Contains extracted video transcriptions in text format:
-- Filename: `{video_name}_{timestamp}.txt`
+Contains extracted audio transcriptions in text format:
+- Filename: `transcription_{timestamp}.txt`
 - Format: Timestamped text lines `[HH:MM:SS] transcription text`
 
 ### `data_sets/`
@@ -139,89 +165,186 @@ Contains analyzed timestamp data in two formats:
 
 Each entry contains:
 - **Key**: Descriptive name of the complementary video needed
-- **Value**: Tuple with (start_timestamp, end_timestamp) in `HH:MM:SS` or `MM:SS` format
+- **Value**: Tuple with (start_timestamp, end_timestamp) in `HH:MM:SS` format
+
+## How It Works
+
+### 3-Step Pipeline
+
+```
+┌─────────────────────────────────────────────────┐
+│ Step 1: Extract Transcription (AssemblyAI)      │
+│   - Submit audio URL to AssemblyAI API          │
+│   - Poll until transcription is complete        │
+│   - Format with timestamps                      │
+│   - Save to .txt file                           │
+└─────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────┐
+│ Step 2: Analyze with Gemini AI                  │
+│   - Send transcription to Gemini                │
+│   - AI identifies insertion points              │
+│   - Returns dictionary of timestamps            │
+└─────────────────────────────────────────────────┘
+                        ↓
+┌─────────────────────────────────────────────────┐
+│ Step 3: Save Results                            │
+│   - Save to .pkl file (binary format)           │
+│   - Save to .json file (human-readable)         │
+│   - Ready for next scripts                      │
+└─────────────────────────────────────────────────┘
+```
+
+### Step 1: Extract Transcription with AssemblyAI
+
+The script:
+1. Submits your audio URL to AssemblyAI API
+2. Polls the API every 5 seconds until transcription completes
+3. Formats transcription with timestamps in `[HH:MM:SS] text` format
+4. Saves to `transcriptions/transcription_{timestamp}.txt`
+
+**AssemblyAI Features:**
+- Supports multiple audio formats (.mp3, .wav, .m4a, etc.)
+- Accurate speech-to-text with timestamps
+- Up to 120 retries (10 minutes of waiting)
+
+### Step 2: Analyze with Gemini AI
+
+**Gemini Prompt:**
+```
+Use this video transcription as reference to find the time stamps 
+in video that can be convenient to add a clip with some video that 
+complements information of that part of video. If I'm talking about 
+a car model, get the start time stamp and end time stamp to add a 
+short video that complements what I'm talking about. Do this for 
+max 11 parts of my video.
+
+Return ONLY a Python dictionary with timestamps.
+```
+
+**What Gemini does:**
+- Analyzes transcription content
+- Identifies contextual moments for video insertion
+- Returns up to 11 optimal timestamps
+- Creates descriptive keys for each insertion point
+
+### Step 3: Save Results
+
+Two output files created:
+1. **`.pkl` file**: Python pickle format for programmatic use
+2. **`.json` file**: Human-readable JSON format
+
+Both contain identical timestamp dictionaries.
 
 ## Workflow Integration
 
-This tool is designed to be part of a three-script workflow:
+This is **Part 1 (First)** of the three-script video enhancement workflow:
 
-1. **This Script**: Extract transcription and analyze for timestamp insertion points
-2. **Download Script** (to be created): Automatically search and download complementary videos based on the generated dictionary
-3. **Integration Script** (to be created): Use FFmpeg to insert downloaded clips at specified timestamps into the original video
+### Complete Pipeline
 
-## Transcription Notes
-
-### Automatic Extraction
-
-The script attempts to extract embedded subtitle tracks from video files. If your video contains subtitles (SRT, VTT, etc.), they will be automatically extracted and formatted.
-
-### Manual Transcription
-
-If no subtitles are found, the script creates a template file. You should replace the placeholder with actual transcription content including timestamps before running the analysis.
-
-**Recommended transcription tools:**
-- [Whisper by OpenAI](https://github.com/openai/whisper) - Free, open-source, highly accurate
-- YouTube auto-generated captions (if applicable)
-- Manual transcription with timestamps
-
-**Required format:**
 ```
-[00:00:15] Introduction to the topic
-[00:01:23] Discussing the main features
-[00:03:45] Example demonstration
+┌────────────────────────────────────────────────────┐
+│ PART 1: Timestamp Analysis (THIS SCRIPT)           │
+│ Script: extract_and_analyze_timestamps.py          │
+│                                                    │
+│ INPUT:  Audio URL (https://example.com/audio.mp3) │
+│ OUTPUT: data_sets/transcription_timestamps.pkl    │
+│         transcriptions/transcription.txt           │
+└────────────────────────────────────────────────────┘
+                         ↓
+┌────────────────────────────────────────────────────┐
+│ PART 2: Download Complementary Videos             │
+│ Script: download_complementary_videos.py          │
+│                                                    │
+│ INPUT:  Timestamps .pkl file                      │
+│ OUTPUT: complementary_videos/*.mp4                │
+└────────────────────────────────────────────────────┘
+                         ↓
+┌────────────────────────────────────────────────────┐
+│ PART 3: Video Integration                         │
+│ Script: integrate_complementary_videos.py         │
+│                                                    │
+│ INPUT:  Original video + complementary videos    │
+│ OUTPUT: final_output/final_video.mp4              │
+└────────────────────────────────────────────────────┘
 ```
-
-## Gemini AI Prompt
-
-The script uses the following prompt to analyze transcriptions:
-
-> "Use this video transcription as reference to find the time stamps in video that can be convenient to add a clip with some video that complements information of that part of video. If I'm talking about a car model, get the start time stamp and end time stamp to add a short video that complements what I'm talking about. Do this for max 11 parts of my video, then return only and absolutely nothing more than a dictionary in Python with adapted time stamps to then be processed with FFMPEG for adding specific videos."
-
-The AI identifies contextual moments where additional footage would enhance viewer understanding or engagement.
 
 ## Troubleshooting
 
-### FFmpeg Not Found
+### API Key Not Found
 
-**Error**: `FFmpeg is not installed or not in PATH`
+**Error**: `GEMINI_API_KEY not found in .env file`
 
-**Solution**: 
+**Solution**:
 ```bash
-sudo apt-get install ffmpeg
-# Verify installation
-ffmpeg -version
+# Create .env file
+touch .env
+
+# Add your API keys
+echo "GEMINI_API_KEY=your_key" >> .env
+echo "ASSEMBLYAI_API_KEY=your_key" >> .env
+
+# Verify
+cat .env
 ```
 
-### API Key Issues
+---
 
-**Error**: `GEMINI_API_KEY environment variable not set`
+### AssemblyAI Transcription Fails
 
-**Solutions**:
-1. Set the environment variable: `export GEMINI_API_KEY='your-key'`
-2. Pass as argument: `python script.py YOUR_KEY video.mp4`
-3. Check your key at [Google AI Studio](https://makersuite.google.com/app/apikey)
+**Error**: `Transcription failed: Download error`
 
-### Import Errors
+**Causes & Solutions**:
+1. **Invalid audio URL**: Ensure URL is publicly accessible
+2. **Unsupported format**: AssemblyAI supports: MP3, WAV, M4A, OGG, FLAC, ULAW
+3. **Network issue**: Check your internet connection
+4. **API key invalid**: Verify key at https://www.assemblyai.com/app/api-keys
+
+---
+
+### Transcription Timeout
+
+**Error**: `Transcription timeout`
+
+**Solution**:
+- Large audio files may take longer than 10 minutes
+- Edit `extract_transcription()` method and increase `max_retries`:
+  ```python
+  max_retries = 240  # 20 minutes instead of 10
+  ```
+
+---
+
+### Gemini AI Parsing Failed
+
+**Error**: `Failed to parse valid dictionary from response`
+
+**Solution**:
+- Transcription might be too short or unclear
+- Try with clearer audio
+- Check console output for Gemini's raw response
+
+---
+
+### Module Not Found
 
 **Error**: `ModuleNotFoundError: No module named 'google.generativeai'`
 
 **Solution**:
 ```bash
+# Make sure virtual environment is activated
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Verify
+pip list | grep google-generativeai
 ```
 
-Make sure your virtual environment is activated if you're using one.
+---
 
-### Video File Not Found
-
-**Error**: `FileNotFoundError: Video file not found`
-
-**Solution**: 
-- Check the file path is correct
-- Use absolute path: `/home/user/videos/my_video.mp4`
-- Ensure you have read permissions for the file
-
-### Permission Denied
+### Permission Error
 
 **Error**: `PermissionError: [Errno 13] Permission denied`
 
@@ -230,89 +353,92 @@ Make sure your virtual environment is activated if you're using one.
 # Make directories writable
 chmod +w transcriptions/ data_sets/
 
-# Or run with appropriate permissions
-sudo python extract_and_analyze_timestamps.py video.mp4
+# Or create if missing
+mkdir -p transcriptions/ data_sets/
 ```
-
-## Advanced Configuration
-
-### Customizing Output Directories
-
-Edit the script's `__init__` method to change output directories:
-
-```python
-self.transcription_dir = Path("my_custom_transcriptions")
-self.dataset_dir = Path("my_custom_datasets")
-```
-
-### Modifying the AI Prompt
-
-To change how Gemini analyzes timestamps, edit the `prompt` variable in the `analyze_with_gemini` method.
-
-### Changing Gemini Model
-
-To use a different Gemini model, modify:
-
-```python
-self.model = genai.GenerativeModel('gemini-2.0-flash-exp')  # Change model name here
-```
-
-Available models: `gemini-pro`, `gemini-2.0-flash-exp`, etc.
-
-## Project Structure
-
-```
-video-timestamp-analyzer/
-├── extract_and_analyze_timestamps.py  # Main script
-├── requirements.txt                    # Python dependencies
-├── README.md                          # This file
-├── transcriptions/                    # Generated transcription files
-└── data_sets/                         # Generated timestamp data
-    ├── *.pkl                          # Pickle format
-    └── *.json                         # JSON format
-```
-
-## API Rate Limits
-
-Google Gemini API has rate limits depending on your tier:
-- **Free tier**: 60 requests per minute
-- **Paid tier**: Higher limits based on your plan
-
-If you encounter rate limit errors, wait a few seconds and retry.
-
-## Contributing
-
-Contributions are welcome! This project is open-source and community-driven.
-
-### How to Contribute
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Check existing issues for solutions
-- Provide detailed error messages and system information when reporting bugs
-
-## Acknowledgments
-
-- Google Gemini AI for powerful content analysis
-- FFmpeg for video processing capabilities
-- The open-source community for inspiration and tools
-
-## Disclaimer
-
-This tool is designed for legitimate video editing purposes. Users are responsible for:
-- Complying with copyright laws when downloading and using complementary videos
-- Ensuring proper licensing for all video content
-- Following Google's Gemini API Terms of Service
-- Respecting content creators' rights
 
 ---
 
-**Made with ❤️ for video editors and content creators**
+## Best Practices
+
+### 1. Audio Quality
+
+- Use clear, high-quality audio
+- Minimum 160ms duration
+- Remove background noise for better accuracy
+
+### 2. API Key Security
+
+- ✅ Use `.env` file with `python-dotenv`
+- ✅ Add `.env` to `.gitignore`
+- ✅ Never commit API keys to Git
+- ✅ Rotate keys periodically
+
+### 3. Testing
+
+- Test with short audio files first (< 1 minute)
+- Verify output files are created
+- Check JSON format is valid
+
+### 4. Storage Management
+
+- Each transcription output: ~1-10 KB
+- Each dataset file: ~1-5 KB
+- Keep old files or delete periodically
+
+## Advanced Usage
+
+### Use with .env.example
+
+Create a safe template for team:
+
+```bash
+# .env.example (safe to commit)
+GEMINI_API_KEY=your_gemini_key_here
+ASSEMBLYAI_API_KEY=your_assemblyai_key_here
+```
+
+Team members copy:
+```bash
+cp .env.example .env
+# Then edit .env with their actual keys
+```
+
+### Custom Output Directories
+
+Edit the script's `__init__` method:
+
+```python
+self.transcription_dir = Path("my_transcriptions")
+self.dataset_dir = Path("my_datasets")
+```
+
+### Change Gemini Model
+
+Modify in `__init__`:
+
+```python
+self.model = genai.GenerativeModel('gemini-pro')  # Different model
+```
+
+Available: `gemini-pro`, `gemini-2.0-flash-exp`, etc.
+
+## Credits
+
+- **AssemblyAI**: For accurate speech-to-text transcription
+- **Google Gemini AI**: For intelligent timestamp analysis
+- **Open Source Community**: For inspiration and tools
+
+## Support
+
+For issues or questions:
+- Check the Troubleshooting section above
+- Visit [AssemblyAI Documentation](https://www.assemblyai.com/docs)
+- Visit [Gemini API Docs](https://ai.google.dev/docs)
+- Open an issue on GitHub
+
+---
+
+**Part 1 of Video Enhancement Toolkit**
+
+Next: Download Complementary Videos (Script 2) → Video Integration (Script 3)
