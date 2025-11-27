@@ -16,21 +16,29 @@ from pathlib import Path
 from datetime import datetime
 import google.generativeai as genai
 from dotenv import load_dotenv
+from moviepy.editor import VideoFileClip
 
+# Getting video duration for gemini AI prompt:
+def get_video_duration():
+    clip = VideoFileClip("./test_video.mp4")
+    duration_seconds = str(clip.duration)  # Duration as a string
+    print(duration_seconds)
+    clip.close()
+    return duration_seconds
 
 class VideoTimestampAnalyzer:
-    def __init__(self, gemini_api_key, assemblyai_api_key, audio_url):
+    def __init__(self, gemini_api_key, assemblyai_api_key, audio_file):
         """
         Initialize the analyzer with Gemini and AssemblyAI API keys.
         
         Args:
             gemini_api_key (str): Google Gemini API key
             assemblyai_api_key (str): AssemblyAI API key
-            audio_url (str): URL to the audio file (.mp3)
+            audio_file (str): Path to local audio file (.mp3)
         """
         self.gemini_api_key = gemini_api_key
         self.assemblyai_api_key = assemblyai_api_key
-        self.audio_url = audio_url
+        self.audio_file = Path(audio_file)
         self.transcription_dir = Path("transcriptions")
         self.dataset_dir = Path("data_sets")
         
@@ -52,20 +60,43 @@ class VideoTimestampAnalyzer:
     
     def extract_transcription(self):
         """
-        Extract transcription from audio using AssemblyAI API.
+        Extract transcription from local audio file using AssemblyAI API.
         """
-        print(f"\n[1/3] Extracting transcription from audio using AssemblyAI API")
+        print(f"\n[1/3] Extracting transcription from: {self.audio_file}")
+        
+        if not self.audio_file.exists():
+            print(f"✗ Audio file not found: {self.audio_file}")
+            return False
         
         try:
-            # Submit audio for transcription
-            print("  Submitting audio for transcription...")
+            # Upload audio file to AssemblyAI
+            print("  Uploading audio file...")
             
+            with open(self.audio_file, 'rb') as f:
+                upload_response = requests.post(
+                    f"{self.assemblyai_base_url}/upload",
+                    headers={"Authorization": self.assemblyai_api_key},
+                    data=f
+                )
+            
+            if upload_response.status_code != 200:
+                print(f"✗ Error uploading file: {upload_response.status_code}")
+                print(f"  Response: {upload_response.text}")
+                return False
+            
+            upload_data = upload_response.json()
+            audio_url = upload_data.get('upload_url')
+            
+            print(f"  ✓ Audio file uploaded")
+            print("  Submitting for transcription...")
+            
+            # Submit audio for transcription
             headers = {
                 "Authorization": self.assemblyai_api_key
             }
             
             data = {
-                "audio_url": self.audio_url
+                "audio_url": audio_url
             }
             
             # Submit transcription request
@@ -119,21 +150,28 @@ class VideoTimestampAnalyzer:
                 print("✗ Transcription timeout")
                 return False
             
-            # Get utterances for timestamps
-            utterances = transcript_data.get('utterances', [])
+            # Get text and utterances for timestamps
+            text = transcript_data.get('text', '')
+            utterances = transcript_data.get('utterances')
             
             # Format transcription with timestamps
             formatted_lines = []
-            for utterance in utterances:
-                start = utterance.get('start', 0)
-                text_content = utterance.get('text', '')
-                
-                # Convert milliseconds to HH:MM:SS format
-                start_time = self._milliseconds_to_timestamp(start)
-                
-                formatted_lines.append(f"[{start_time}] {text_content}")
             
-            transcription_text = '\n'.join(formatted_lines)
+            if utterances and isinstance(utterances, list):
+                # Use utterances if available
+                for utterance in utterances:
+                    start = utterance.get('start', 0)
+                    text_content = utterance.get('text', '')
+                    
+                    # Convert milliseconds to HH:MM:SS format
+                    start_time = self._milliseconds_to_timestamp(start)
+                    
+                    formatted_lines.append(f"[{start_time}] {text_content}")
+                
+                transcription_text = '\n'.join(formatted_lines)
+            else:
+                # Fallback to full text if utterances not available
+                transcription_text = text if text else "[00:00:00] No transcription available"
             
             # Save transcription
             with open(self.transcription_file, 'w', encoding='utf-8') as f:
@@ -174,10 +212,14 @@ Then, return only and absolutely nothing more than a dictionary in Python with a
 
 Being in the dictionary a reference name to that complementary video that we want to add, then a tuple where first element is start time stamp and second is end timestamp.
 
-IMPORTANT: Return ONLY the Python dictionary, no explanation, no markdown formatting, no code blocks. Just the raw dictionary.
+IMPORTANT: Return ONLY the Python dictionary, no explanation, no markdown formatting, no code blocks. Just the raw dictionary remmiding that your response will be plain text, because you can only produce plain text.
+
 
 Video Transcription:
 {transcription}
+
+Video duration:
+{get_video_duration()}
 """
         
         try:
@@ -326,17 +368,18 @@ def main():
         print("\nGet your API key at: https://www.assemblyai.com/app/api-keys")
         sys.exit(1)
     
-    # Get audio URL from command line
+    # Get audio file from command line
     if len(sys.argv) < 2:
-        print("Usage: python extract_and_analyze_timestamps.py AUDIO_URL")
+        print("Usage: python extract_and_analyze_timestamps.py AUDIO_FILE")
         print("\nExample:")
-        print("  python extract_and_analyze_timestamps.py https://example.com/audio.mp3")
+        print("  python extract_and_analyze_timestamps.py audio.mp3")
+        print("  python extract_and_analyze_timestamps.py /path/to/audio.mp3")
         sys.exit(1)
     
-    audio_url = sys.argv[1]
+    audio_file = sys.argv[1]
     
     # Run the analyzer
-    analyzer = VideoTimestampAnalyzer(gemini_api_key, assemblyai_api_key, audio_url)
+    analyzer = VideoTimestampAnalyzer(gemini_api_key, assemblyai_api_key, audio_file)
     success = analyzer.run_full_pipeline()
     
     sys.exit(0 if success else 1)
