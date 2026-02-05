@@ -1,0 +1,10 @@
+2026-02-04 12:21:46,105 - INFO - Start variable set to: pepe
+2026-02-04 12:21:50,665 - INFO - Initial capital VES set to: $150000.000
+2026-02-04 12:21:59,185 - INFO - Buying price set to: $516.700
+2026-02-04 12:21:59,185 - INFO - Transaction summary - Available: $149995.50000000, Potential units: 290.295
+2026-02-04 12:29:01,016 - INFO - Script terminated by user (Ctrl+C)
+2026-02-04 12:29:14,136 - INFO - Start variable set to: pepe
+2026-02-04 12:29:19,456 - INFO - Initial capital VES set to: $150000.0000
+2026-02-04 12:30:19,630 - INFO - Buying price set to: $519.5100
+2026-02-04 12:30:19,631 - INFO - Transaction summary - Available: $149995.5000, Potential units (with commission): 288.7250, Potential units (without commission): 288.7336
+2026-02-04 12:30:36,006 - INFO - Script terminated by user (Ctrl+C)
